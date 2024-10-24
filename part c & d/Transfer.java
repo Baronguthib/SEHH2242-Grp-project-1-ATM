@@ -3,11 +3,11 @@
 
 public class Transfer extends Transaction
 {
-   private double amount = 0; // amount to transfer
+   private double amount; // amount to transfer
    private Keypad keypad; // reference to keypad
    private TransferSlot transferSlot; // reference to deposit slot
    private final static int CANCELED = 0; // constant for cancel option
-   private boolean checkNumber = false; // check is the account number is valid or invalid
+   private boolean checkNumber = true; // check is the account number is valid or invalid
 
    // Deposit constructor
    public Transfer( int userAccountNumber, Screen atmScreen, 
@@ -27,72 +27,80 @@ public class Transfer extends Transaction
    {
       BankDatabase bankDatabase = getBankDatabase(); // get reference
       Screen screen = getScreen(); // get reference
+      int accountNumber = 0;
       
-      screen.displayMessage("\nPlease enter the account number you want " +
-      "to transfer to: ");
-      int accountNumber = keypad.getInput();
-      
-      checkNumber = bankDatabase.checkAccountNumber( accountNumber );
-      if(checkNumber)
+      do
       {
-          if( accountNumber != getAccountNumber() )
+          screen.displayMessage("\nPlease enter the account number you want " +
+          "to transfer to (or 0 to cancel) : ");
+          accountNumber = keypad.getInput();
+          checkNumber = bankDatabase.checkAccountNumber( accountNumber );
+          if(checkNumber)
           {
-              amount = promptForTransferAmount(); // get transfer amount from user
-          }
-          else if( accountNumber == getAccountNumber() )
-          {
-              screen.displayMessageLine( "\nYou cannot transfer to " +
-              "same account. So the ATM has canceled your transaction." );
-          }
-      }
-      else if(!checkNumber)
-      {
-          screen.displayMessageLine( "\nInvalid account number. " +
-          "So the ATM has canceled your transaction." );
-          amount = CANCELED;
-      }
-      if ( amount > bankDatabase.getAvailableBalance( getAccountNumber() ) )
-      {
-          screen.displayMessageLine(
-              "\nYou don't have enough money to transfer. " + 
-              "So the ATM has canceled your transaction.");
-          screen.displayMessageLine( "\nCanceling transaction..." );
-      }
-      // check whether user entered a transfer amount or canceled
-      else if ( amount != CANCELED && 
-      amount <= bankDatabase.getAvailableBalance( getAccountNumber() ) )
-      {
-         // request transfer envelope containing specified amount
-         screen.displayMessage( 
-            "\nPlease insert a transfer envelope containing " );
-         screen.displayDollarAmount( amount );
-         screen.displayMessageLine( "." );
-
-         // receive transfer envelope
-         boolean envelopeReceived = transferSlot.isEnvelopeReceived();
-
-         // check whether transfer envelope was received
-         if ( envelopeReceived )
-         {  
-            screen.displayMessageLine( "\nYour envelope has been " + 
-               "received.\nNOTE: The money just transfered will not " + 
-               "be available until we verify the amount of any " +
-               "enclosed cash and your checks clear." );
+              if( accountNumber != getAccountNumber() )
+              {
+                  amount = promptForTransferAmount(); // get transfer amount from user
+                  if ( amount > bankDatabase.getAvailableBalance( getAccountNumber() ) )
+                  {
+                      screen.displayMessageLine(
+                          "\nYou don't have enough money to transfer. " + 
+                          "Please try again");
+                  }
+                  // check whether user entered a transfer amount or canceled
+                  else if ( amount != CANCELED && 
+                  amount <= bankDatabase.getAvailableBalance( getAccountNumber() ) )
+                  {
+                     // request transfer envelope containing specified amount
+                     screen.displayMessage( 
+                        "\nPlease insert a transfer envelope containing " );
+                     screen.displayDollarAmount( amount );
+                     screen.displayMessageLine( "." );
             
-            // credit account to reflect the transfer
-            bankDatabase.debit( getAccountNumber(), amount ); 
-            bankDatabase.credit( accountNumber, amount ); 
-         } // end if
-         else // transfer envelope not received
-         {
-            screen.displayMessageLine( "\nYou did not insert an " +
-               "envelope, so the ATM has canceled your transaction." );
-         } // end else
-      } // end if 
-      else // user canceled instead of entering amount
-      {
-         screen.displayMessageLine( "\nCanceling transaction..." );
-      } // end else
+                     // receive transfer envelope
+                     boolean envelopeReceived = transferSlot.isEnvelopeReceived();
+            
+                     // check whether transfer envelope was received
+                     if ( envelopeReceived )
+                     {  
+                        screen.displayMessageLine( "\nYour envelope has been " + 
+                           "received.\nNOTE: The money just transfered will not " + 
+                           "be available until we verify the amount of any " +
+                           "enclosed cash and your checks clear." );
+                        
+                        // credit account to reflect the transfer
+                        bankDatabase.debit( getAccountNumber(), amount ); 
+                        bankDatabase.credit( accountNumber, amount ); 
+                     } // end if
+                     else // transfer envelope not received
+                     {
+                        screen.displayMessageLine( "\nYou did not insert an " +
+                           "envelope, so the ATM has canceled your transaction." );
+                     } // end else
+                  } // end if 
+                  else// user canceled instead of entering amount
+                  {
+                     screen.displayMessageLine( "\nCanceling transaction..." );
+                     break;
+                  } // end else
+              }
+              else if( accountNumber == getAccountNumber() )
+              {
+                  screen.displayMessageLine( "\nYou cannot transfer to " +
+                  "same account. Please try again" );
+              }
+          }
+          else if(accountNumber == CANCELED)// user canceled instead of entering amount
+          {
+              screen.displayMessageLine( "\nCanceling transaction..." );
+              break;
+          }
+          else if(!checkNumber)
+          {
+              screen.displayMessageLine( "\nInvalid account number. " +
+              "Please try again." );              
+          } // end else
+      }while(accountNumber != CANCELED || !checkNumber || accountNumber == getAccountNumber());
+      
    } // end method execute
 
    // prompt user to enter a transfer amount in cents 
