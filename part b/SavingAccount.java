@@ -9,7 +9,7 @@ public class SavingAccount extends Account
       }
       public void setInterest_rate(double newInterest_rate)
       {
-          this.interest_rate= interest_rate;
+          this.interest_rate = interest_rate;
           
       }
       public double getInterest_rate()
