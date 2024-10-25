@@ -9,7 +9,7 @@ public class ChequeAccount extends Account
       }
       public void setlimitPerCheque(double newlimitPerCheque)
       {
-          limitPerCheque=newlimitPerCheque;
+          this.limitPerCheque = limitPerCheque;
           
       }
       public double getInterest_rate()
