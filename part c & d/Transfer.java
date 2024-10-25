@@ -70,11 +70,13 @@ public class Transfer extends Transaction
                         // credit account to reflect the transfer
                         bankDatabase.debit( getAccountNumber(), amount ); 
                         bankDatabase.credit( accountNumber, amount ); 
+                        break;
                      } // end if
                      else // transfer envelope not received
                      {
                         screen.displayMessageLine( "\nYou did not insert an " +
                            "envelope, so the ATM has canceled your transaction." );
+                        break;
                      } // end else
                   } // end if 
                   else// user canceled instead of entering amount
@@ -107,12 +109,21 @@ public class Transfer extends Transaction
    private double promptForTransferAmount()
    {
       Screen screen = getScreen(); // get reference to screen
-
+      double input;  
       // display the prompt
-      screen.displayMessage( "\nPlease enter a transfer amount in " + 
+      do
+      {
+          screen.displayMessage( "\nPlease enter a transfer amount in " + 
          "DOLLARS (or 0 to cancel): " );
-      double input = keypad.getMoneyInput(); // receive input of transfer amount
+          input = keypad.getMoneyInput(); // receive input of transfer amount
+          if(input < 0)
+          {
+              screen.displayMessageLine( "\nPlease enter positive amount. " +
+              "Try again" );
+          }
+      }while(input < 0);
       
+
       // check whether the user canceled or entered a valid amount
       if ( input == CANCELED ) 
          return CANCELED;
